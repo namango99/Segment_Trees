@@ -1,5 +1,3 @@
-package SegmentTress;
-
 public class RMQLazyPropagation {
 
 	public static void Build_SegementTree(int[] tree,int [] arr,int index,int start,int end) {

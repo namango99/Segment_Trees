@@ -1,0 +1,189 @@
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.util.StringTokenizer;
+
+class Main {
+	public static class node{
+		long f;//denote first element of the range
+		long s;//denote second element of the range
+		long ff;//denote the frequency of the first element in given range
+		long sf;//denote the frequency of the last element in given range 
+		long ans;//Ans in the given range
+		node(long f,long s,long ff,long sf,long ans){
+			this.f=f;
+			this.s=s;
+			this.ans=ans;this.ff=ff;
+			this.sf=sf;
+		}
+	}
+	
+	public static void Build(node[] tree,int[] arr,int index,int start,int end) {
+		//leaf node
+		if(start==end) {
+			tree[index]=new node(arr[start],arr[start],1,1,1);
+			return;
+		}
+		//not leaf node
+		int mid=(start+end)>>1;
+		Build(tree,arr,index*2,start,mid);
+		Build(tree,arr,index*2+1,mid+1,end);
+		node leftchild=tree[index*2];
+		node rightchild=tree[index*2+1];
+		long f,s,ff,sf,ans=Integer.MIN_VALUE;
+		if(leftchild.f==rightchild.s) {
+			f=leftchild.f;
+			s=f;
+			ff=leftchild.ff+rightchild.sf;
+			sf=ff;
+		}else if(leftchild.s==rightchild.s) {
+			f=leftchild.f;
+			ff=leftchild.ff;
+			s=leftchild.s;
+			sf=leftchild.sf+rightchild.sf;
+		}else if(leftchild.f==rightchild.f) {
+			s=rightchild.s;
+			sf=rightchild.sf;
+			f=leftchild.f;
+			ff=leftchild.ff+rightchild.ff;
+		}else if(leftchild.s==rightchild.f) {
+			f=leftchild.f;
+			ff=leftchild.ff;
+			s=rightchild.s;
+			sf=rightchild.sf;
+			ans=leftchild.sf+rightchild.ff;
+		}else {
+			f=leftchild.f;
+			ff=leftchild.ff;
+			s=rightchild.s;
+			sf=rightchild.sf;
+		}
+		ans=Long.max(ans, Long.max(leftchild.ans, rightchild.ans));
+		ans=Long.max(ff,Long.max(ans, sf));
+		tree[index]=new node(f,s,ff,sf,ans);
+	}
+	
+	public static node Query(node[] tree,int index,int start,int end,int left ,int right) {
+		if(left>end || left>right || right<start) {
+			return null;
+		}
+		if(start>=left && right>=end) {
+			return tree[index];
+		}
+		int mid=(start+end)>>1;
+		node leftchild=Query(tree,index*2,start,mid,left,right);
+		node rightchild=Query(tree,index*2+1,mid+1,end,left,right);
+		if(leftchild==null && rightchild!=null) {
+			return rightchild;
+		}
+		if(leftchild!=null && rightchild==null) {
+			return leftchild;
+		}
+		long f,s,ff,sf,ans=Integer.MIN_VALUE;
+		if(leftchild.f==rightchild.s) {
+			f=leftchild.f;
+			s=f;
+			ff=leftchild.ff+rightchild.sf;
+			sf=ff;
+		}else if(leftchild.s==rightchild.s) {
+			f=leftchild.f;
+			ff=leftchild.ff;
+			s=leftchild.s;
+			sf=leftchild.sf+rightchild.sf;
+		}else if(leftchild.f==rightchild.f) {
+			s=rightchild.s;
+			sf=rightchild.sf;
+			f=leftchild.f;
+			ff=leftchild.ff+rightchild.ff;
+		}else if(leftchild.s==rightchild.f) {
+			f=leftchild.f;
+			ff=leftchild.ff;
+			s=rightchild.s;
+			sf=rightchild.sf;
+			ans=leftchild.sf+rightchild.ff;
+		}else {
+			f=leftchild.f;
+			ff=leftchild.ff;
+			s=rightchild.s;
+			sf=rightchild.sf;
+		}
+		ans=Long.max(ans, Long.max(leftchild.ans, rightchild.ans));
+		ans=Long.max(ff,Long.max(ans, sf));
+		return new node(f,s,ff,sf,ans);
+	}
+	
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		out=new PrintWriter (new BufferedOutputStream(System.out));
+		FastReader s=new FastReader();
+		int n=s.nextInt();
+		while(n!=0) {
+			int q=s.nextInt();
+			int[] arr=new int[n];
+			for(int i=0;i<n;i++) {
+				arr[i]=s.nextInt();
+			}
+			node[] tree=new node[4*n+1];
+			Build(tree,arr,1,0,arr.length-1);
+			while(q-->0) {
+				int x=s.nextInt()-1;
+				int y=s.nextInt()-1;
+				node ans=Query(tree,1,0,arr.length-1,x,y);
+				out.println(ans.ans);
+			}
+			n=s.nextInt();
+		}
+		out.close();
+	}
+	
+	public static PrintWriter out;
+	
+	public static class FastReader {
+		BufferedReader br;
+		StringTokenizer st;
+		//it reads the data about the specified point and divide the data about it ,it is quite fast
+		//than using direct 
+
+		public FastReader() {
+			br = new BufferedReader(new InputStreamReader(System.in));
+			//InputStream reads the data and decodes in character stream
+			//It acts as bridge between byte stream and character stream
+		}
+
+		String next() {
+			while (st == null || !st.hasMoreTokens()) {
+				try {
+					st = new StringTokenizer(br.readLine());
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			return st.nextToken();
+		}
+
+		int nextInt() {
+			return Integer.parseInt(next());//converts string to integer
+		}
+
+		double nextDouble() {
+			return Double.parseDouble(next());
+		}
+
+		long nextLong() {
+			return Long.parseLong(next());
+		}
+
+		String nextLine() {
+			String str = "";
+			try {
+				str = br.readLine();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return str;
+		}
+	}
+	
+}
+/*Very Good Question Based on Segment trees...*/

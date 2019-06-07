@@ -1,0 +1,137 @@
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.util.StringTokenizer;
+
+class Main {
+
+	//Here prefixsum and suffixsum together can constitute for middle max subarray
+	//Here total will have will have all the sum of range
+	//Here best is ans for the current range
+	public static class Segment_Tree{
+		long prefixsum;
+		long suffixsum;
+		long total;
+		long best;
+		Segment_Tree(long prefixsum,long suffixsum,long total,long best){
+			this.prefixsum=prefixsum;
+			this.suffixsum=suffixsum;
+			this.total=total;
+			this.best=best;
+		}
+	}
+	
+	public static void Build(Segment_Tree[] tree,long[] arr,int index,int start,int end) {
+		//leaf node
+		if(start==end) {
+			tree[index]=new Segment_Tree(arr[start],arr[start],arr[start],arr[start]);
+			return ;
+		}
+		//not leaf node
+		int mid=(start+end)>>1;
+		Build(tree,arr,index*2,start,mid);
+		Build(tree,arr,index*2+1,mid+1,end);
+		long prefixsum=Long.max(tree[index*2].prefixsum,tree[index*2].total+tree[index*2+1].prefixsum);
+		long suffixsum=Long.max(tree[index*2+1].suffixsum,tree[index*2].suffixsum+tree[index*2+1].total);
+		long total=tree[index*2].total+tree[index*2+1].total;
+		long best=Long.max(tree[index*2].suffixsum+tree[index*2+1].prefixsum, Long.max(tree[index*2].best, tree[index*2+1].best));
+		tree[index]=new Segment_Tree(prefixsum,suffixsum,total,best);
+		return;
+	}
+	
+	public static Segment_Tree Query(Segment_Tree[] tree,int index,int start,int end,int left ,int right) {
+		//No Overlap
+		if(left>end || left>right || right<start) {
+			return null;
+		}
+		//Complete Overalap
+		if(start>=left && end<=right) {
+			return tree[index];
+		}
+		//Partial OverLap
+		int mid=(start+end)>>1;
+		Segment_Tree leftchild=Query(tree, index*2, start, mid, left, right);
+		Segment_Tree rightchild=Query(tree, index*2+1,mid+1, end ,left, right);
+		if(leftchild==null && rightchild!=null) {
+			return rightchild;
+		}else if(leftchild!=null && rightchild==null) {
+			return leftchild;
+		}
+		long prefixsum=Long.max(leftchild.prefixsum, leftchild.total+rightchild.prefixsum);
+		long suffixsum=Long.max(rightchild.suffixsum,rightchild.total+leftchild.suffixsum);
+		long total=rightchild.total+leftchild.total;
+		long best=Long.max(leftchild.suffixsum+rightchild.prefixsum, Long.max(leftchild.best, rightchild.best));
+		return new Segment_Tree(prefixsum,suffixsum,total,best);
+	}
+	
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		out=new PrintWriter (new BufferedOutputStream(System.out));
+		FastReader s=new FastReader();
+		int n=s.nextInt();
+		long[] arr=new long[n];
+		for(int i=0;i<n;i++) {
+			arr[i]=s.nextInt();
+		}
+		Segment_Tree[] tree=new Segment_Tree[4*n+1];
+		Build(tree,arr,1,0,arr.length-1);
+		int m=s.nextInt();
+		while(m-->0) {
+			int x=s.nextInt()-1;
+			int y=s.nextInt()-1;
+			Segment_Tree ans=Query(tree,1,0,arr.length-1,x,y);
+			out.println(ans.best);
+		}
+		out.close();
+	}	
+	
+	public static PrintWriter out;
+	
+	public static class FastReader {
+		BufferedReader br;
+		StringTokenizer st;
+		//it reads the data about the specified point and divide the data about it ,it is quite fast
+		//than using direct 
+
+		public FastReader() {
+			br = new BufferedReader(new InputStreamReader(System.in));
+			//InputStream reads the data and decodes in character stream
+			//It acts as bridge between byte stream and character stream
+		}
+
+		String next() {
+			while (st == null || !st.hasMoreTokens()) {
+				try {
+					st = new StringTokenizer(br.readLine());
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			return st.nextToken();
+		}
+
+		int nextInt() {
+			return Integer.parseInt(next());//converts string to integer
+		}
+
+		double nextDouble() {
+			return Double.parseDouble(next());
+		}
+
+		long nextLong() {
+			return Long.parseLong(next());
+		}
+
+		String nextLine() {
+			String str = "";
+			try {
+				str = br.readLine();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return str;
+		}
+	}
+	
+}

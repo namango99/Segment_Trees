@@ -135,3 +135,21 @@ class Main {
 	}
 	
 }
+/*
+Very Nice Problem ... 
+
+https://www.spoj.com/problems/GSS1/
+
+One Of the Nice test Case..
+*Example*
+8
+1 2
+3 -4 5 -4 -3 7
+2
+1 5
+2 8
+*Output*
+7
+7
+
+*/

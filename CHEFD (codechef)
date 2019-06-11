@@ -1,0 +1,232 @@
+//Problem Link: https://www.codechef.com/problems/CHEFD
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.util.StringTokenizer;
+
+class Main{
+
+	public static class node{
+		int[] arr;
+		node(int div2,int div3,int div5){
+			arr=new int[3];
+			arr[0]=div2;
+			arr[1]=div3;
+			arr[2]=div5;
+		}
+	}
+	
+	public static void Modify1type(node[] lazy,int[] arr,int index,int start,int end,int left,int right,int p) {
+		//no overlap
+		if(left>right || start>right || end<left) {
+			return ;
+		}
+		node lazynode=lazy[index];
+		if(lazynode.arr[0]!=0 || lazynode.arr[1]!=0 || lazynode.arr[2]!=0) {
+			if(start==end) {
+				int value=lazynode.arr[0];
+				while(arr[start]%2==0 && value>0) {
+					arr[start]/=2;
+					value--;
+				}
+				value=lazynode.arr[1];
+				while(arr[start]%3==0 && value>0) {
+					arr[start]/=3;
+					value--;
+				}
+				value=lazynode.arr[2];
+				while(arr[start]%5==0 && value>0) {
+					arr[start]/=5;
+					value--;
+				}
+			}else {
+				node value=lazy[index*2];
+				lazy[index*2]=new node(value.arr[0]+lazynode.arr[0],value.arr[1]+lazynode.arr[1],value.arr[2]+lazynode.arr[2]);
+				value=lazy[index*2+1];
+				lazy[index*2+1]=new node(value.arr[0]+lazynode.arr[0],value.arr[1]+lazynode.arr[1],value.arr[2]+lazynode.arr[2]);
+			}	
+			lazynode.arr[0]=0;
+			lazynode.arr[1]=0;
+			lazynode.arr[2]=0;
+		}
+		if(start==end) {
+			int value=p==2?1:0;
+			while(arr[start]%2==0 && value>0) {
+				arr[start]/=2;
+				value--;
+			}
+			value=p==3?1:0;
+			while(arr[start]%3==0 && value>0) {
+				arr[start]/=3;
+				value--;
+			}
+			value=p==5?1:0;
+			while(arr[start]%5==0 && value>0) {
+				arr[start]/=5;
+				value--;
+			}
+			return;
+		}
+		//complete overalap
+		if(start>=left && end<=right) {
+			if(p==2) {
+				lazy[index*2].arr[0]+=1;
+				lazy[index*2+1].arr[0]+=1;
+			}else if(p==3) {
+				lazy[index*2].arr[1]+=1;
+				lazy[index*2+1].arr[1]+=1;
+			}else {
+				lazy[index*2].arr[2]+=1;
+				lazy[index*2+1].arr[2]+=1;
+			}
+			return;
+		}
+		//Partial Overlap
+		int mid=(start+end)>>1;
+		Modify1type(lazy, arr, index*2, start, mid, left, right, p);
+		Modify1type(lazy, arr, index*2+1, mid+1, end, left, right, p);
+	}
+	
+	public static void Modify2type(node[] lazy,int[] arr,int index,int start,int end,int pos,int newval) {
+		//no overlap
+		if(pos<start || pos>end || pos<0 || pos>=arr.length) {
+			return ;
+		}
+		if(start==end) {
+			lazy[index]=new node(0,0,0);
+			arr[start]=newval;
+			return;
+		}
+		node lazynode=lazy[index];
+		if(lazynode.arr[0]!=0 || lazynode.arr[1]!=0 || lazynode.arr[2]!=0) {
+			node value=lazy[index*2];
+			lazy[index*2]=new node(value.arr[0]+lazynode.arr[0],value.arr[1]+lazynode.arr[1],value.arr[2]+lazynode.arr[2]);
+			value=lazy[index*2+1];
+			lazy[index*2+1]=new node(value.arr[0]+lazynode.arr[0],value.arr[1]+lazynode.arr[1],value.arr[2]+lazynode.arr[2]);
+			lazy[index].arr[0]=0;
+			lazy[index].arr[1]=0;
+			lazy[index].arr[2]=0;
+		}
+		int mid=(start+end)>>1;
+		Modify2type(lazy, arr, index*2, start, mid, pos, newval);
+		Modify2type(lazy, arr, index*2+1, mid+1, end, pos, newval);
+	}
+	
+	public  static void RemoveAllLaziness(node[] lazy,int[] arr,int index,int start, int end) {
+		if(index>=lazy.length) {
+			return;
+		}
+		node lazynode=lazy[index];
+		if(lazynode.arr[0]!=0 || lazynode.arr[1]!=0 || lazynode.arr[2]!=0) {
+			if(start==end) {
+				int value=lazynode.arr[0];
+				while(arr[start]%2==0 && value>0) {
+					arr[start]/=2;
+					value--;
+				}
+				value=lazynode.arr[1];
+				while(arr[start]%3==0 && value>0) {
+					arr[start]/=3;
+					value--;
+				}
+				value=lazynode.arr[2];
+				while(arr[start]%5==0 && value>0) {
+					arr[start]/=5;
+					value--;
+				}
+				return;
+			}else {
+				node value=lazy[index*2];
+				lazy[index*2]=new node(value.arr[0]+lazynode.arr[0],value.arr[1]+lazynode.arr[1],value.arr[2]+lazynode.arr[2]);
+				value=lazy[index*2+1];
+				lazy[index*2+1]=new node(value.arr[0]+lazynode.arr[0],value.arr[1]+lazynode.arr[1],value.arr[2]+lazynode.arr[2]);
+			}
+		}
+		int mid=(start+end)>>1;
+		RemoveAllLaziness(lazy,arr,index*2,start,mid);
+		RemoveAllLaziness(lazy,arr,index*2+1,mid+1,end);
+	}
+	
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		out=new PrintWriter (new BufferedOutputStream(System.out));
+		FastReader s=new FastReader();
+		int n=s.nextInt();
+		int[] arr=new int[n];
+		for(int i=0;i<n;i++)arr[i]=s.nextInt();
+		int m=s.nextInt();
+		node[] lazy=new node[4*n+1];
+		for(int i=0;i<4*n+1;i++) {
+			lazy[i]=new node(0,0,0);
+		}
+		while(m-->0) {
+			int x=s.nextInt();
+			if(x==1) {
+				int left=s.nextInt()-1;
+				int right=s.nextInt()-1;
+				int p=s.nextInt();
+				Modify1type(lazy, arr, 1, 0, arr.length-1, left, right, p);
+			}else if(x==2) {
+				int pos=s.nextInt()-1;
+				int newval=s.nextInt();
+				Modify2type(lazy, arr, 1, 0, arr.length-1, pos, newval);
+			}
+		}
+		RemoveAllLaziness(lazy,arr,1,0,arr.length-1);
+		for(int i=0;i<n;i++) {
+			out.print(arr[i]+ " ");
+		}
+		out.close();
+	}
+
+	public static PrintWriter out;
+	
+	public static class FastReader {
+		BufferedReader br;
+		StringTokenizer st;
+		//it reads the data about the specified point and divide the data about it ,it is quite fast
+		//than using direct 
+
+		public FastReader() {
+			br = new BufferedReader(new InputStreamReader(System.in));
+			//InputStream reads the data and decodes in character stream
+			//It acts as bridge between byte stream and character stream
+		}
+
+		String next() {
+			while (st == null || !st.hasMoreTokens()) {
+				try {
+					st = new StringTokenizer(br.readLine());
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			return st.nextToken();
+		}
+
+		int nextInt() {
+			return Integer.parseInt(next());//converts string to integer
+		}
+
+		double nextDouble() {
+			return Double.parseDouble(next());
+		}
+
+		long nextLong() {
+			return Long.parseLong(next());
+		}
+
+		String nextLine() {
+			String str = "";
+			try {
+				str = br.readLine();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return str;
+		}
+	}
+	
+}
+//In this problem we have to do both range and node update hence lazy propagation is needed otherwise tle

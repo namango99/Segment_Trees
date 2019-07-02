@@ -1,0 +1,207 @@
+//link : www.codechef.com/problems/QSET
+//Good question based on segment trees
+//Take care of big data ... therefore use long instead of int
+
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.util.StringTokenizer;
+
+public class QSET {
+	
+	public static class Node{
+		int total;
+		long[] prefix;
+		long[] suffix;
+		long currentans;
+		public Node(int total) {
+			this.total=total;
+			prefix=new long[3];
+			suffix=new long[3];
+			currentans=0;
+		}
+	}
+	
+	public static void Build(Node[] tree,int[] arr,int index,int start,int end) {
+		//Leaf node 
+		if(start==end) {
+			int curr=arr[start];
+			tree[index]=new Node(curr%3);
+			tree[index].prefix[curr%3]=1;
+			tree[index].suffix[curr%3]=1;
+			tree[index].currentans=curr%3==0?1:0;
+			return;
+		}
+		//not leaf node
+		int mid=(start+end)>>1;
+		Build(tree,arr,index*2,start,mid);
+		Build(tree,arr,index*2+1,mid+1,end);
+		Node ans=new Node((tree[index*2].total+tree[index*2+1].total)%3);
+		for(int i=0;i<3;i++) {
+			ans.prefix[i]=tree[index*2].prefix[i];
+			ans.suffix[i]=tree[index*2+1].suffix[i];
+		}
+		for(int i=0;i<3;i++) {
+			int value=(tree[index*2].total+i)%3;
+			ans.prefix[value]+=tree[index*2+1].prefix[i];
+			value=(i+tree[index*2+1].total)%3;
+			ans.suffix[value]+=tree[index*2].suffix[i];
+		}
+		ans.currentans=(tree[index*2].currentans+tree[index*2+1].currentans);
+		ans.currentans+=tree[index*2].suffix[1]*tree[index*2+1].prefix[2];
+		ans.currentans+=tree[index*2].suffix[2]*tree[index*2+1].prefix[1];
+		ans.currentans+=tree[index*2].suffix[0]*tree[index*2+1].prefix[0];
+		tree[index]=ans;
+	}
+
+	public static Node Query(Node[] tree,int index,int start,int end,int left ,int right) {
+		//no overlap
+		if(start>end || end<left || start>right) {
+			return new Node(0);
+		}
+		//complete overlap
+		if(start>=left && end<=right) {
+			Node helper=new Node(tree[index].total);
+			for(int i=0;i<3;i++) {
+				helper.prefix[i]=tree[index].prefix[i];
+				helper.suffix[i]=tree[index].suffix[i];
+			}
+			helper.currentans=tree[index].currentans;
+			return helper;
+		}
+		//Partial overlap
+		int mid=(start+end)>>1;
+		Node first=Query(tree,index*2,start,mid,left,right);
+		Node second=Query(tree,index*2+1,mid+1,end,left,right);
+		Node ans=new Node((first.total+second.total)%3);
+		for(int i=0;i<3;i++) {
+			ans.prefix[i]=first.prefix[i];
+			ans.suffix[i]=second.suffix[i];
+		}
+		for(int i=0;i<3;i++) {
+			int value=(first.total+i)%3;
+			ans.prefix[value]+=second.prefix[i];
+			value=(i+second.total)%3;
+			ans.suffix[value]+=first.suffix[i];
+		}
+		ans.currentans=(first.currentans+second.currentans);
+		ans.currentans+=first.suffix[1]*second.prefix[2];
+		ans.currentans+=first.suffix[2]*second.prefix[1];
+		ans.currentans+=first.suffix[0]*second.prefix[0];
+		return ans;
+	}
+	
+	public static void Update (Node[] tree,int index,int start,int end,int x,int val) {
+		//node not in the given range
+		if(x>end || x<start) {
+			return;
+		}
+		//reached node
+		if(start==end) {
+			int curr=val;
+			tree[index]=new Node(curr%3);
+			tree[index].prefix[curr%3]=1;
+			tree[index].suffix[curr%3]=1;
+			tree[index].currentans=curr%3==0?1:0;
+			return;
+		}
+		//node in the range
+		int mid=(start+end)>>1;
+		Update(tree,index*2,start,mid,x,val);
+		Update(tree,index*2+1,mid+1,end,x,val);
+		Node ans=new Node((tree[index*2].total+tree[index*2+1].total)%3);
+		for(int i=0;i<3;i++) {
+			ans.prefix[i]=tree[index*2].prefix[i];
+			ans.suffix[i]=tree[index*2+1].suffix[i];
+		}
+		for(int i=0;i<3;i++) {
+			int value=(tree[index*2].total+i)%3;
+			ans.prefix[value]+=tree[index*2+1].prefix[i];
+			value=(i+tree[index*2+1].total)%3;
+			ans.suffix[value]+=tree[index*2].suffix[i];
+		}
+		ans.currentans=(tree[index*2].currentans+tree[index*2+1].currentans);
+		ans.currentans+=tree[index*2].suffix[1]*tree[index*2+1].prefix[2];
+		ans.currentans+=tree[index*2].suffix[2]*tree[index*2+1].prefix[1];
+		ans.currentans+=tree[index*2].suffix[0]*tree[index*2+1].prefix[0];
+		tree[index]=ans;
+	}
+	
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		out=new PrintWriter(new BufferedOutputStream(System.out));
+		FastReader s=new FastReader();
+		int n=s.nextInt();
+		int m=s.nextInt();
+		int[] arr=new int[n];
+		String str=s.next();
+		for(int i=0;i<n;i++) {
+			arr[i]=str.charAt(i)-'0';
+		}
+		Node[] tree=new Node[4*n+1];
+		Build(tree,arr,1,0,n-1);
+		while(m-->0) {
+			int type=s.nextInt();
+			int x=s.nextInt();
+			int y=s.nextInt();
+			if(type==1) {
+				Update(tree,1,0,n-1,x-1,y);
+			}else {
+				Node ans=Query(tree,1,0,n-1,x-1,y-1);
+				out.println(ans.currentans);
+			}
+		}
+		out.close();
+	}	
+	
+	public static PrintWriter out;
+	
+	public static class FastReader {
+		BufferedReader br;
+		StringTokenizer st;
+		//it reads the data about the specified point and divide the data about it ,it is quite fast
+		//than using direct 
+
+		public FastReader() {
+			br = new BufferedReader(new InputStreamReader(System.in));
+			//InputStream reads the data and decodes in character stream
+			//It acts as bridge between byte stream and character stream
+		}
+
+		String next() {
+			while (st == null || !st.hasMoreTokens()) {
+				try {
+					st = new StringTokenizer(br.readLine());
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			return st.nextToken();
+		}
+
+		int nextInt() {
+			return Integer.parseInt(next());//converts string to integer
+		}
+
+		double nextDouble() {
+			return Double.parseDouble(next());
+		}
+
+		long nextLong() {
+			return Long.parseLong(next());
+		}
+
+		String nextLine() {
+			String str = "";
+			try {
+				str = br.readLine();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return str;
+		}
+	}	
+
+}
+
